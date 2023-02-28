@@ -23,7 +23,10 @@ class Model(object):
 
         self.mean_diffusivity = D_scale * mean_diffusivity
         
-        self.diffusion_tensor = D_scale * diffusion_tensor
+        self.diffusion_tensor = diffusion_tensor
+        
+        if self.diffusion_tensor is not None:
+            self.diffusion_tensor *= D_scale
         self.V = V
 
         self.ds = Measure('ds')(domain=self.V.mesh())
@@ -45,8 +48,6 @@ class Model(object):
                 "(", format(self.T / 1, ".0f"), "seconds)"
                 " with time step size", format(self.dt / 60, ".0f"), "minutes")
 
-
-        self.next_image_index = 0
         
         self.L2_error = 0.0
         self.datanorm = 0.0
@@ -219,11 +220,11 @@ class Model(object):
         
         # Solution at current and previous time
         u_prev = self.data[0] # Function(self.V)
-        u_next = Function(self.V)
+        u_next = self.data[0] # Function(self.V)
 
         pvdfile = File(str(self.outfolder / "movie.pvd"))
-        u_prev.rename("simulation", "simulation    ")
-        pvdfile << u_prev
+        # u_prev.rename("simulation", "simulation    ")
+        # pvdfile << u_prev
 
         self.simulated_tracer.append(u_prev.copy())
 
@@ -285,8 +286,11 @@ class Model(object):
             
             iter_k += 1
 
-            u_prev.assign(u_next)
+            u_prev.rename("simulation", "simulation")
+            pvdfile << u_prev
 
+            u_prev.assign(u_next)
+            
             self.advance_time(u_prev)
             
             # get current BC:
@@ -312,14 +316,14 @@ class Model(object):
                 progress.update(1)
     
         
-            u_next.rename("simulation", "simulation")
-            pvdfile << u_next
 
+        u_prev.assign(u_next)
+        u_prev.rename("simulation", "simulation")
+        pvdfile << u_prev
     
 
 
-        # return self.return_value()
-
+        print("Done with simulation")
 
 
 if __name__ == "__main__":
@@ -347,19 +351,24 @@ if __name__ == "__main__":
 
     assert os.path.isfile(meshpath)
 
-    brainmesh = Mesh()
-    hdf = HDF5File(brainmesh.mpi_comm(), meshpath, "r")
-    hdf.read(brainmesh, "/mesh", False)
-
-    try:
-        subdomains = MeshFunction("size_t", brainmesh, brainmesh.topology().dim())
-        hdf.read(subdomains, "/subdomains")
-
-        # GRAY = 1. WHITE = 2. BRAIN STEM = 3.
-        dx_SD = Measure('dx')(domain=brainmesh, subdomain_data=subdomains)
-    except:
-        print("No subdomains found")
+    if meshpath.endswith("xml"):
+        brainmesh = Mesh(meshpath)
+        
         dx_SD = None
+    else:
+
+        try:
+            brainmesh = Mesh()
+            hdf = HDF5File(brainmesh.mpi_comm(), meshpath, "r")
+            hdf.read(brainmesh, "/mesh", False)
+            subdomains = MeshFunction("size_t", brainmesh, brainmesh.topology().dim())
+            hdf.read(subdomains, "/subdomains")
+
+            # GRAY = 1. WHITE = 2. BRAIN STEM = 3.
+            dx_SD = Measure('dx')(domain=brainmesh, subdomain_data=subdomains)
+        except:
+            print("No subdomains found")
+            dx_SD = None
     
     V = FunctionSpace(brainmesh, "CG", 1)
     mean_diffusivitySpace = FunctionSpace(brainmesh, 'DG', 0)
@@ -376,7 +385,9 @@ if __name__ == "__main__":
         mean_diffusivity = Constant(1e-4)
         diffusion_tensor = None
 
-    tmax = 3600 * 60
+
+    # simulate for up to 4 days after first image
+    tmax = 3600 * 4 * 24
 
 
     mris = MRI_Measurements(datapath=datapath, function_space=V,    Tmax=tmax, file_suffix="_concentration")
