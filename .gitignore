@@ -9,6 +9,8 @@
 !README.md
 !concentration_from_T1map.py
 !make_brainmask.py
+!diffusion.py
+!measurements.py
 # etc...
 
 # ...even if they are in subdirectories
