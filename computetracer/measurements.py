@@ -51,9 +51,12 @@ def read_image(filename, functionspace, data_filter=None):
         voxeldata = data_filter(voxeldata, ijk, i, j, k)
         c_data.vector()[:] = voxeldata[i, j, k]
     else:
+        if numpy.where(numpy.isnan(voxeldata[i, j, k]), 1,0).sum() > 0:
+            print("No filter used, setting", numpy.where(numpy.isnan(voxeldata[i, j, k]), 1, 0).sum(), "/", i.size, " nan voxels to 0")
+            voxeldata[i, j, k] = numpy.where(numpy.isnan(voxeldata[i, j, k]), 0, voxeldata[i, j, k])
+        if numpy.where(voxeldata[i, j, k] < 0, 1,0).sum() > 0:
+            print("No filter used, setting", numpy.where(voxeldata[i, j, k] < 0, 1, 0).sum(), "/", i.size, " voxels in mesh have value < 0")
 
-        print("No filter used, setting", numpy.where(numpy.isnan(voxeldata[i, j, k]), 1, 0).sum(), "/", i.size, " nan voxels to 0")
-        voxeldata[i, j, k] = numpy.where(numpy.isnan(voxeldata[i, j, k]), 0, voxeldata[i, j, k])
         c_data.vector()[:] = voxeldata[i, j, k]
 
     return c_data

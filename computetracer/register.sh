@@ -73,7 +73,7 @@ fi
 # Register the images to template.mgz
 # cf. https://surfer.nmr.mgh.harvard.edu/fswiki/mri_robust_register
 
-mkidr -pv ${WORKDIR}/LTA/
+mkdir -pv ${WORKDIR}/LTA/
 
 for inputfile in ${INPUTFOLDER}/*.mgz; do
 
@@ -84,5 +84,4 @@ for inputfile in ${INPUTFOLDER}/*.mgz; do
     
     echo "Done with" $filename
 
-    exit
 done
