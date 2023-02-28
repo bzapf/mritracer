@@ -144,6 +144,8 @@ class Model(object):
 
         def boundary(x, on_boundary):
             return on_boundary
+        
+        print("time=", format(self.t / 3600, ".0f"), "h, image_counter=", self.image_counter_prev)
                         
         self.linear_interpolation.vector()[:] = self.data[self.image_counter_prev].vector()[:]
         
@@ -190,7 +192,7 @@ class Model(object):
         u_next = Function(self.V)
 
         pvdfile = File(str(self.outfolder / "movie.pvd"))
-        u_prev.renamve("simulation", "simulation")
+        u_prev.renamve("simulation", "simulation    ")
         pvdfile << u_prev
 
         try:
