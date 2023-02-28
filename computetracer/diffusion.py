@@ -158,6 +158,8 @@ class Model(object):
 
     def store_values(self, fun):
 
+        return
+
         with open(self.concfile, 'a') as file:
 
             file.write('%g ' % self.t)
@@ -185,7 +187,10 @@ class Model(object):
         u_prev = self.data[0] # Function(self.V)
         u_next = Function(self.V)
 
-        self.store_values(fun=u_prev)
+        try:
+            self.store_values(fun=u_prev)
+        except:
+            pass
 
         iter_k = 0
 
@@ -240,9 +245,11 @@ class Model(object):
             solver.solve(u_next.vector(), b)
 
             # solve(A, U.vector(), b, 'lu')
+            try:
             
-            self.store_values(fun=u_next)
-
+                self.store_values(fun=u_next)
+            except:
+                pass
 
             progress.update(1)
 
