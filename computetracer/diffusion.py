@@ -140,6 +140,8 @@ class Model(object):
         Linear interpolation c_1 + (c2 - c1) / (t2 - t1) * (t - t1) of image data as boundary condition
         """
         
+        # print()
+
         def boundary(x, on_boundary):
             return on_boundary
                         
@@ -182,10 +184,13 @@ class Model(object):
         # Define trial and test-functions
         u = TrialFunction(self.V)
         v = TestFunction(self.V)
-
+        
         # Solution at current and previous time
         u_prev = self.data[0] # Function(self.V)
         u_next = Function(self.V)
+
+        pvdfile = File(str(self.outfolder / "movie.pvd"))
+        pvdfile << u_prev
 
         try:
             self.store_values(fun=u_prev)
@@ -223,6 +228,7 @@ class Model(object):
 
         progress = tqdm(total=int(self.T / self.dt))
 
+
         while self.t + self.dt / 1 <= self.T:
             
             iter_k += 1
@@ -252,6 +258,12 @@ class Model(object):
                 pass
 
             progress.update(1)
+    
+        
+            u_next.rename("simulation", "simulation")
+            pvdfile << u_next
+
+    
 
 
         # return self.return_value()
