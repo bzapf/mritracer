@@ -48,9 +48,9 @@ class Model(object):
         self.outfolder = outfolder
         self.brain_volume = assemble(Constant(1) * self.dx)
         self.brain_surface_area = assemble(1 * self.ds)
-        self.gray_volume = assemble(1 * dx) # dx_SD(1))
-        self.white_matter_volume = assemble(1 * dx) # dx_SD(2))
-        self.brain_stem_volume = assemble(1 * dx) # dx_SD(3))
+        self.gray_volume = assemble(1 * dx(V.mesh())) # dx_SD(1))
+        self.white_matter_volume = assemble(1 * dx(V.mesh())) # dx_SD(2))
+        self.brain_stem_volume = assemble(1 * dx(V.mesh())) # dx_SD(3))
 
         self.concfile = self.outfolder / 'simulated_concentration.txt'
         with open(self.concfile, 'w') as file:
@@ -195,16 +195,16 @@ class Model(object):
         iter_k = 0
 
         def diffusion(fun):
-            term = self.mean_diffusivity * inner(grad(fun), grad(v)) * dx # self.dx_SD(1)
-            term += inner(dot(self.diffusion_tensor, grad(fun)), grad(v)) * dx # self.dx_SD(2)
-            term += self.mean_diffusivity * inner(grad(fun), grad(v)) * dx # self.dx_SD(3)
+            term = self.mean_diffusivity * inner(grad(fun), grad(v)) * dx(V.mesh()) # self.dx_SD(1)
+            term += inner(dot(self.diffusion_tensor, grad(fun)), grad(v)) * dx(V.mesh()) # self.dx_SD(2)
+            term += self.mean_diffusivity * inner(grad(fun), grad(v)) * dx(V.mesh()) # self.dx_SD(3)
 
             return term
 
         def reaction(fun):
-            return r * inner(fun, v) * dx
+            return r * inner(fun, v) * dx(V.mesh())
 
-        a = inner(u, v) * dx
+        a = inner(u, v) * dx(V.mesh())
         # NOTE: if you change this to explicit/Crank-Nicolson, change L in the loop!
         # implicit time stepping:
         a += self.dt * alpha * diffusion(fun=u)
@@ -237,7 +237,7 @@ class Model(object):
             bc.apply(A)
 
             # Assemble RHS and apply DirichletBC
-            rhs = u_prev * v * dx
+            rhs = u_prev * v * dx(V.mesh())
             b = assemble(rhs)
             bc.apply(b)
 
