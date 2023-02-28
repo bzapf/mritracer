@@ -6,7 +6,7 @@ import numpy
 from nibabel.affines import apply_affine
 import os
 from datetime import datetime
-
+import argparse
 
 # parameters['allow_extrapolation'] = True
 
@@ -120,3 +120,32 @@ class MRI_Measurements():
         for t in self.measurement_points():
             u = self.get_measurement(t)
             vtkfile << u
+
+
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d", "--data", type=str, help="Path to image in mgz format.")
+    parser.add_argument("-m", "--mesh", help="Path to mesh.")
+
+    parserargs = vars(parser.parse_args())
+
+    meshfile = parserargs["mesh"]
+
+    if meshfile.endswith(".xml"):
+        brainmesh = Mesh(meshfile)
+    else:
+        brainmesh = Mesh()
+        hdf = HDF5File(brainmesh.mpi_comm(), meshfile, "r")
+        hdf.read(brainmesh, "/mesh", False)
+
+    V = FunctionSpace(brainmesh, "CG", 1)
+
+    c_data_fenics = read_image(filename=parserargs["data"], functionspace=V, data_filter=None)
+
+    File("data_fenics.pvd") << c_data_fenics
+
+    hdf5file = HDF5File(V.mesh().mpi_comm(), "data_fenics.hdf", "w")
+    hdf5file.write(V.mesh(), "mesh")
+    hdf5file.write(c_data_fenics, "c")
+        

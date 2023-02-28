@@ -254,8 +254,10 @@ class Model(object):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data", default="/home/basti/Dropbox (UiO)/Sleep/228/FIGURES_CONC_LUT/")
-    parser.add_argument("--mesh", default="/home/basti/Dropbox (UiO)/Sleep/228/mesh/parenchyma32_with_DTI.h5")
+    parser.add_argument("--data", default="/home/basti/Dropbox (UiO)/Sleep/228/FIGURES_CONC_LUT/", 
+                        help="Path to folder containing concentrations in mgz format. Assuming that imaging time is contained as '%Y%m%d_%H%M%S' in filename.")
+    parser.add_argument("--mesh", default="/home/basti/Dropbox (UiO)/Sleep/228/mesh/parenchyma32_with_DTI.h5",
+                        help="path to mesh as .h5 file. Assuming that the file has /subdomains, /MD, /DTI")
     parser.add_argument("--outfolder", default="./simulation_outputs/")
     parserargs = vars(parser.parse_args())
 
