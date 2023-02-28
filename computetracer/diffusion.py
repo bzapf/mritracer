@@ -48,9 +48,9 @@ class Model(object):
         self.outfolder = outfolder
         self.brain_volume = assemble(Constant(1) * self.dx)
         self.brain_surface_area = assemble(1 * self.ds)
-        self.gray_volume = assemble(1 * dx_SD(1))
-        self.white_matter_volume = assemble(1 * dx_SD(2))
-        self.brain_stem_volume = assemble(1 * dx_SD(3))
+        self.gray_volume = assemble(1 * dx) # dx_SD(1))
+        self.white_matter_volume = assemble(1 * dx) # dx_SD(2))
+        self.brain_stem_volume = assemble(1 * dx) # dx_SD(3))
 
         self.concfile = self.outfolder / 'simulated_concentration.txt'
         with open(self.concfile, 'w') as file:
@@ -195,9 +195,9 @@ class Model(object):
         iter_k = 0
 
         def diffusion(fun):
-            term = self.mean_diffusivity * inner(grad(fun), grad(v)) * self.dx_SD(1)
-            term += inner(dot(self.diffusion_tensor, grad(fun)), grad(v)) * self.dx_SD(2)
-            term += self.mean_diffusivity * inner(grad(fun), grad(v)) * self.dx_SD(3)
+            term = self.mean_diffusivity * inner(grad(fun), grad(v)) * dx # self.dx_SD(1)
+            term += inner(dot(self.diffusion_tensor, grad(fun)), grad(v)) * dx # self.dx_SD(2)
+            term += self.mean_diffusivity * inner(grad(fun), grad(v)) * dx # self.dx_SD(3)
 
             return term
 
@@ -286,11 +286,11 @@ if __name__ == "__main__":
     brainmesh = Mesh()
     hdf = HDF5File(brainmesh.mpi_comm(), meshpath, "r")
     hdf.read(brainmesh, "/mesh", False)
-    subdomains = MeshFunction("size_t", brainmesh, brainmesh.topology().dim())
-    hdf.read(subdomains, "/subdomains")
+    # subdomains = MeshFunction("size_t", brainmesh, brainmesh.topology().dim())
+    # hdf.read(subdomains, "/subdomains")
 
     # GRAY = 1. WHITE = 2. BRAIN STEM = 3.
-    dx_SD = Measure('dx')(domain=brainmesh, subdomain_data=subdomains)
+    # dx_SD = Measure('dx')(domain=brainmesh, subdomain_data=subdomains)
 
     V = FunctionSpace(brainmesh, "CG", 1)
     diffusiontensor_Space = TensorFunctionSpace(brainmesh, 'DG', 0)
@@ -300,6 +300,8 @@ if __name__ == "__main__":
     diffusion_tensor = Function(diffusiontensor_Space)
     hdf.read(mean_diffusivity, '/MD')
     hdf.read(diffusion_tensor, '/DTI')
+
+    dx_SD = None
 
     tmax = 3600 * 60
 
