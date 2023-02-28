@@ -192,7 +192,7 @@ class Model(object):
         u_next = Function(self.V)
 
         pvdfile = File(str(self.outfolder / "movie.pvd"))
-        u_prev.renamve("simulation", "simulation    ")
+        u_prev.rename("simulation", "simulation    ")
         pvdfile << u_prev
 
         try:
