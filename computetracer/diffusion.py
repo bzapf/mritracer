@@ -298,8 +298,12 @@ if __name__ == "__main__":
     mean_diffusivity = Function(mean_diffusivitySpace)
 
     diffusion_tensor = Function(diffusiontensor_Space)
-    hdf.read(mean_diffusivity, '/MD')
-    hdf.read(diffusion_tensor, '/DTI')
+
+    mean_diffusivity = Constant(1)
+    diffusion_tensor.vector()[:] = 1
+    
+    # hdf.read(mean_diffusivity, '/MD')
+    # hdf.read(diffusion_tensor, '/DTI')
 
     dx_SD = None
 
