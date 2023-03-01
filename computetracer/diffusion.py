@@ -107,7 +107,7 @@ class Model(object):
         
         for idx, sim in enumerate(self.simulated_tracer):
             sim.rename("simulation", "simulation")
-            hdf5file.write(sim, "simulation" + str(idx))
+            hdf5file.write(sim, "simulation" + format(self.checkpoints[idx]/3600, ".0f"))
 
         hdf5file.close()
 
