@@ -5,6 +5,8 @@ import numpy
 import nibabel
 import warnings
 
+# Treshold T1 values to range [TMIN, TMAX]
+TMIN, TMAX = 0.2, 4.5 # seconds
 
 def concentration_from_T1(T_1_t: numpy.ndarray,T_1_0: numpy.ndarray, r_1: float = 3.2) -> numpy.ndarray:
 
@@ -41,7 +43,7 @@ def concentration_from_T1(T_1_t: numpy.ndarray,T_1_0: numpy.ndarray, r_1: float 
     return concentration    
 
 
-def signal_to_T1(S_t: numpy.ndarray, S_0: numpy.ndarray, T_1_0: numpy.ndarray, b:float = 1.48087682, T_min: float = 0.2, T_max: float = 4.5) -> numpy.ndarray:
+def signal_to_T1(S_t: numpy.ndarray, S_0: numpy.ndarray, T_1_0: numpy.ndarray, b:float = 1.48087682, T_min: float = TMIN, T_max: float = TMAX) -> numpy.ndarray:
 
     """
     Estimate T1 in every image voxel of a normalized T1-weighted images via the equation
@@ -135,6 +137,10 @@ if __name__ == "__main__":
         if baseline_t1_map.max() > 100:
             print("Assuming T1 Map is given in milliseconds, converting to seconds")
             baseline_t1_map /= 1e3
+
+        # Treshold extreme values (probably noise / artefacts):
+        baseline_t1_map = numpy.where(baseline_t1_map < TMIN, TMIN, baseline_t1_map)
+        baseline_t1_map = numpy.where(baseline_t1_map > TMAX, TMAX, baseline_t1_map)
 
     else:
         print("*"*80)

@@ -71,10 +71,10 @@ python normalize.py --inputfolder ${WORKDIR}/REGISTERED/ \
 
 ### Create a synthetic T1 map
 
-Create an image with voxel value 1000 ms everywhere inside the parenchyma:
+Create an image with voxel value 1 s everywhere inside the parenchyma:
 
 ```
-python make_brainmask.py --aseg ${WORKDIR}/mri/aseg.mgz --t1 1000
+python make_brainmask.py --aseg ${WORKDIR}/mri/aseg.mgz --t1 1
 ```
 
 

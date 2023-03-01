@@ -7,8 +7,7 @@ from nibabel.affines import apply_affine
 import os
 from datetime import datetime
 import argparse
-
-# parameters['allow_extrapolation'] = True
+from computetracer.mri2fenics import read_image
 
 
 
@@ -33,33 +32,7 @@ def get_delta_t(f1, f2, file_suffix=""):
     return time
 
 
-def read_image(filename, functionspace, data_filter=None):
-    
-    print("Loading", filename)
-    
-    mri_volume = nibabel.load(filename)
-    voxeldata = mri_volume.get_fdata()
 
-    c_data = Function(functionspace)
-    ras2vox_tkr_inv = numpy.linalg.inv(mri_volume.header.get_vox2ras_tkr())
-
-    xyz = functionspace.tabulate_dof_coordinates()
-    ijk = apply_affine(ras2vox_tkr_inv, xyz).T
-    i, j, k = numpy.rint(ijk).astype("int")
-    
-    if data_filter is not None:
-        voxeldata = data_filter(voxeldata, ijk, i, j, k)
-        c_data.vector()[:] = voxeldata[i, j, k]
-    else:
-        if numpy.where(numpy.isnan(voxeldata[i, j, k]), 1,0).sum() > 0:
-            print("No filter used, setting", numpy.where(numpy.isnan(voxeldata[i, j, k]), 1, 0).sum(), "/", i.size, " nan voxels to 0")
-            voxeldata[i, j, k] = numpy.where(numpy.isnan(voxeldata[i, j, k]), 0, voxeldata[i, j, k])
-        if numpy.where(voxeldata[i, j, k] < 0, 1,0).sum() > 0:
-            print("No filter used, setting", numpy.where(voxeldata[i, j, k] < 0, 1, 0).sum(), "/", i.size, " voxels in mesh have value < 0")
-
-        c_data.vector()[:] = voxeldata[i, j, k]
-
-    return c_data
 
 
 class MRI_Measurements():
@@ -124,31 +97,3 @@ class MRI_Measurements():
             u = self.get_measurement(t)
             vtkfile << u
 
-
-if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-d", "--data", type=str, help="Path to image in mgz format.")
-    parser.add_argument("-m", "--mesh", help="Path to mesh.")
-
-    parserargs = vars(parser.parse_args())
-
-    meshfile = parserargs["mesh"]
-
-    if meshfile.endswith(".xml"):
-        brainmesh = Mesh(meshfile)
-    else:
-        brainmesh = Mesh()
-        hdf = HDF5File(brainmesh.mpi_comm(), meshfile, "r")
-        hdf.read(brainmesh, "/mesh", False)
-
-    V = FunctionSpace(brainmesh, "CG", 1)
-
-    c_data_fenics = read_image(filename=parserargs["data"], functionspace=V, data_filter=None)
-
-    File("data_fenics.pvd") << c_data_fenics
-
-    hdf5file = HDF5File(V.mesh().mpi_comm(), "data_fenics.hdf", "w")
-    hdf5file.write(V.mesh(), "mesh")
-    hdf5file.write(c_data_fenics, "c")
-        

@@ -8,7 +8,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-a', '--aseg', required=True, type=str, 
     help="FreeSurfer segmentation file aseg.mgz")
 parser.add_argument('--t1', default=None, type=float, 
-    help="Set the voxel valuels inside mask to t1 (create synthetic T1 map)")
+    help="Set the voxel valuels inside mask to t1 (create synthetic T1 map). Note: the other scripts use units of seconds")
 parserargs = parser.parse_args()
 parserargs = vars(parserargs)
 
