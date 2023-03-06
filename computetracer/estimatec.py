@@ -7,6 +7,7 @@ import warnings
 
 # Treshold T1 values to range [TMIN, TMAX]
 TMIN, TMAX = 0.2, 4.5 # seconds
+MAX_ALLOWED_INCREASE = 400 # in percent, used as a safety to check if the input data is normalized
 
 def concentration_from_T1(T_1_t: numpy.ndarray,T_1_0: numpy.ndarray, r_1: float = 3.2) -> numpy.ndarray:
 
@@ -78,6 +79,19 @@ def signal_to_T1(S_t: numpy.ndarray, S_0: numpy.ndarray, T_1_0: numpy.ndarray, b
         numpy.ndarray: T1-map array with same shape as S_t, S_0, T_1_0
     """
 
+    if numpy.max(S_t[~numpy.isnan(S_t)]) > MAX_ALLOWED_INCREASE:
+        answer = None
+        while answer not in ["y", "n"]:
+            answer = input("Maximum increase larger than 400 %. Did you normalize the T1-weighted images? Type 'y' to continue, 'n' to abort.").lower()
+        
+        if answer == "y":
+            pass
+        else:
+            print("'n' was entered, Exiting script.")
+            exit()
+
+
+
     if numpy.max(T_1_0) > T_max:
         warnings.warn("Warning: Maximum value in T1 Map is, " + format(numpy.max(T_1_0)) +",T1 values should be given in units of seconds")
 
@@ -101,6 +115,7 @@ if __name__ == "__main__":
         help="path to export concentration images. will be stored. Will be created if it does not exist.")
     parser.add_argument('--t1map', type=str, default=None, help="T1 Map as .mgz file")
     parser.add_argument('--mask', type=str, default=None, help="Path to mask for the brain")
+    parser.add_argument('--baseline', type=str, default=None, help="Manually specify path to baseline in case sorting fails.")
     
     parserargs = vars(parser.parse_args())
     
@@ -109,9 +124,21 @@ if __name__ == "__main__":
     
     os.makedirs(exportfolder, exist_ok=True)
 
-    images = sorted([inputfolder / f for f in os.listdir(parserargs["inputfolder"]) if f.endswith(".mgz")])
+    images = sorted([inputfolder / f for f in os.listdir(parserargs["inputfolder"]) if f.endswith(".mgz") and "template" not in f])
 
-    print("Loading baseline image", images[0])
+    print("")
+    print("Loading baseline image", images[0].name)
+    print("The other images are (sorted):")
+    for im in images:
+        print("--", im.name)
+
+    answer = None
+    while answer not in ["y", "n"]:
+        answer = input("Is the baseline correct? Type either of [y, n]:").lower()
+    
+    if not answer == "y":
+        print("Manually set baseline with the optional --baseline argument. Exiting script.")
+        exit()
 
     baseline_img = nibabel.load(images[0])
     affine = baseline_img.affine
@@ -143,9 +170,9 @@ if __name__ == "__main__":
         baseline_t1_map = numpy.where(baseline_t1_map > TMAX, TMAX, baseline_t1_map)
 
     else:
-        print("*"*80)
+        print("*"*100)
         print("Argument --t1map not specified, assuming the image images in --inputfolder are T1 maps (not T1-weighted images!)")
-        print("*"*80)
+        print("*"*100)
         baseline_t1_map = baseline
 
 

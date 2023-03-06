@@ -35,7 +35,11 @@ for imagepath in images:
     image_affine = image.affine
     image = image.get_fdata()
 
-    normalized_image = image / numpy.median(image[refroi])
+    normalization_value = numpy.median(image[refroi])
+
+    print(imagepath.name, "normalization value =", format(normalization_value, ".0f"))
+
+    normalized_image = image / normalization_value
 
     assert numpy.allclose(refroi_affine, refroi_affine), "Affine transformations differ, are you sure the images are registered properly?"
 
